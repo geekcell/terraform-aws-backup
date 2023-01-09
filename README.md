@@ -44,7 +44,12 @@ that should make sense for most use cases.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_backup_name"></a> [backup\_name](#input\_backup\_name) | The display name of a backup plan. | `string` | n/a | yes |
-| <a name="input_rules"></a> [rules](#input\_rules) | Backup rules to add to the AWS Backup Vault. See examples for usage. | <pre>list(object({<br>    name                     = string<br>    schedule                 = string<br>    start_window             = number<br>    completion_window        = number<br>    enable_continuous_backup = bool<br>    lifecycle                = map(string)<br>  }))</pre> | `[]` | no |
+| <a name="input_changeable_for_days"></a> [changeable\_for\_days](#input\_changeable\_for\_days) | The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create a vault lock in compliance mode. | `number` | `null` | no |
+| <a name="input_max_retention_days"></a> [max\_retention\_days](#input\_max\_retention\_days) | The maximum retention period that the vault retains its recovery points. | `number` | `365` | no |
+| <a name="input_min_retention_days"></a> [min\_retention\_days](#input\_min\_retention\_days) | The minimum retention period that the vault retains its recovery points. | `number` | `7` | no |
+| <a name="input_resources"></a> [resources](#input\_resources) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan. | `list(string)` | `[]` | no |
+| <a name="input_rules"></a> [rules](#input\_rules) | Backup rules to add to the AWS Backup Vault. See examples for usage. | <pre>list(object({<br>    name                     = string<br>    schedule                 = string<br>    start_window             = number<br>    completion_window        = number<br>    enable_continuous_backup = bool<br>    lifecycle                = map(string)<br>  }))</pre> | <pre>[<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 365<br>    },<br>    "name": "weekly-snapshot",<br>    "schedule": "cron(0 3 ? * 2,3,4,5,6,7,1 *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 365<br>    },<br>    "name": "monthly-snapshot",<br>    "schedule": "cron(0 3 1 * ? *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 730<br>    },<br>    "name": "quarterly-snapshot",<br>    "schedule": "cron(0 3 1 1,4,7,10 ? *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 3650<br>    },<br>    "name": "yearly-snapshot",<br>    "schedule": "cron(0 3 1 1 ? *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": true,<br>    "lifecycle": {<br>      "cold_storage_after": null,<br>      "delete_after": 35<br>    },<br>    "name": "daily-snapshot",<br>    "schedule": "cron(0 3 ? * * *)",<br>    "start_window": 60<br>  }<br>]</pre> | no |
+| <a name="input_service"></a> [service](#input\_service) | The service that the resource belongs to. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to add to the AWS Backup. | `map(any)` | `{}` | no |
 | <a name="input_vault_name"></a> [vault\_name](#input\_vault\_name) | Name of the backup vault to create. | `string` | n/a | yes |
 
@@ -60,9 +65,16 @@ No outputs.
 
 ## Resources
 
-- resource.aws_backup_plan.main (main.tf#38)
+- resource.aws_backup_plan.main (main.tf#45)
+- resource.aws_backup_selection.main (main.tf#38)
 - resource.aws_backup_vault.main (main.tf#8)
 - resource.aws_backup_vault_lock_configuration.main (main.tf#15)
+- resource.aws_iam_role.main (main.tf#86)
+- resource.aws_iam_role_policy_attachment.main_backup (main.tf#93)
+- resource.aws_iam_role_policy_attachment.main_restore (main.tf#98)
+- resource.aws_iam_role_policy_attachment.s3_backup (main.tf#103)
+- resource.aws_iam_role_policy_attachment.s3_restore (main.tf#108)
+- data source.aws_iam_policy_document.main (data.tf#1)
 
 # Examples
 ### Full
@@ -72,6 +84,7 @@ module "example" {
 
   vault_name  = "main"
   backup_name = "rds"
+  service     = "s3"
 }
 ```
 <!-- END_TF_DOCS -->
