@@ -37,7 +37,8 @@ variable "resources" {
 
 variable "rules" {
   description = "Backup rules to add to the AWS Backup Vault. See examples for usage."
-  default     = [
+
+  default = [
     # Weekly At 03:00 AM UTC, only on
     # Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, and Sunday
     {
