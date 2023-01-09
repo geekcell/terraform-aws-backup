@@ -15,8 +15,8 @@ resource "aws_backup_vault" "main" {
 resource "aws_backup_vault_lock_configuration" "main" {
   backup_vault_name = var.vault_name
 
-  min_retention_days  = var.min_retention_days
-  max_retention_days  = var.max_retention_days
+  min_retention_days = var.min_retention_days
+  max_retention_days = var.max_retention_days
 
   # When you apply these settings:
   #
@@ -33,7 +33,6 @@ resource "aws_backup_vault_lock_configuration" "main" {
   # Since you cannot delete the Vault, it will be charged
   # for backups until that date. Be careful!
   changeable_for_days = var.changeable_for_days
-
 }
 
 resource "aws_backup_selection" "main" {
