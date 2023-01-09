@@ -46,7 +46,8 @@ variable "rules" {
       start_window             = 60
       completion_window        = 240
       enable_continuous_backup = false
-      lifecycle                = {
+
+      lifecycle = {
         cold_storage_after = 1
         delete_after       = 365 # 1 year
       }
@@ -58,7 +59,8 @@ variable "rules" {
       start_window             = 60
       completion_window        = 240
       enable_continuous_backup = false
-      lifecycle                = {
+
+      lifecycle = {
         cold_storage_after = 1
         delete_after       = 365 # 1 year
       }
@@ -71,7 +73,8 @@ variable "rules" {
       start_window             = 60
       completion_window        = 240
       enable_continuous_backup = false
-      lifecycle                = {
+
+      lifecycle = {
         cold_storage_after = 1
         delete_after       = 730 # 2 years
       }
@@ -83,7 +86,8 @@ variable "rules" {
       start_window             = 60
       completion_window        = 240
       enable_continuous_backup = false
-      lifecycle                = {
+
+      lifecycle = {
         cold_storage_after = 1
         delete_after       = 3650 # 10 years
       }
@@ -95,7 +99,8 @@ variable "rules" {
       start_window             = 60
       completion_window        = 240
       enable_continuous_backup = true
-      lifecycle                = {
+
+      lifecycle = {
         cold_storage_after = null
         delete_after       = 35
       }
