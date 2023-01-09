@@ -65,15 +65,15 @@ No outputs.
 
 ## Resources
 
-- resource.aws_backup_plan.main (main.tf#46)
-- resource.aws_backup_selection.main (main.tf#39)
+- resource.aws_backup_plan.main (main.tf#45)
+- resource.aws_backup_selection.main (main.tf#38)
 - resource.aws_backup_vault.main (main.tf#8)
 - resource.aws_backup_vault_lock_configuration.main (main.tf#15)
-- resource.aws_iam_role.main (main.tf#87)
-- resource.aws_iam_role_policy_attachment.main_backup (main.tf#94)
-- resource.aws_iam_role_policy_attachment.main_restore (main.tf#99)
-- resource.aws_iam_role_policy_attachment.s3_backup (main.tf#104)
-- resource.aws_iam_role_policy_attachment.s3_restore (main.tf#109)
+- resource.aws_iam_role.main (main.tf#86)
+- resource.aws_iam_role_policy_attachment.main_backup (main.tf#93)
+- resource.aws_iam_role_policy_attachment.main_restore (main.tf#98)
+- resource.aws_iam_role_policy_attachment.s3_backup (main.tf#103)
+- resource.aws_iam_role_policy_attachment.s3_restore (main.tf#108)
 - data source.aws_iam_policy_document.main (data.tf#1)
 
 # Examples
