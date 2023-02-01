@@ -15,6 +15,9 @@ resource "aws_backup_vault" "main" {
 resource "aws_backup_vault_lock_configuration" "main" {
   backup_vault_name = var.vault_name
 
+  min_retention_days = var.min_retention_days
+  max_retention_days = var.max_retention_days
+
   # When you apply these settings:
   #
   # The vault will become immutable in 3 days after applying.
@@ -26,13 +29,17 @@ resource "aws_backup_vault_lock_configuration" "main" {
   # managed or deleted by anyone, even the root user or AWS.
   # The only way to deactivate the lock is to terminate the account,
   # which will delete all the backups.
+  #
+  # Since you cannot delete the Vault, it will be charged
+  # for backups until that date. Be careful!
+  changeable_for_days = var.changeable_for_days
+}
 
-  # Since you cannot delete the Vault, we will be charged
-  # for backups until that date.
-
-  # ch4n634bl3_f0r_d4y5 = 3
-  max_retention_days = 14
-  min_retention_days = 7
+resource "aws_backup_selection" "main" {
+  iam_role_arn = aws_iam_role.main.arn
+  name         = "${var.vault_name}-backup"
+  plan_id      = aws_backup_plan.main.id
+  resources    = var.resources
 }
 
 resource "aws_backup_plan" "main" {
@@ -57,15 +64,56 @@ resource "aws_backup_plan" "main" {
           cold_storage_after = rule.value.lifecycle.cold_storage_after
         }
       }
+
+      copy_action {
+        destination_vault_arn = aws_backup_vault.main.arn
+      }
+
+      recovery_point_tags = {
+        Name = rule.value.name
+      }
     }
   }
 
-  tags = var.tags
+  tags = merge(
+    var.tags,
+    {
+      "ServiceType" = "backup"
+    }
+  )
+}
+
+resource "aws_iam_role" "main" {
+  name        = "${var.vault_name}-backup"
+  description = "This role is responsible for the backup in the Vault."
+
+  assume_role_policy = data.aws_iam_policy_document.main.json
+}
+
+resource "aws_iam_role_policy_attachment" "main_backup" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+  role       = aws_iam_role.main.name
+}
+
+resource "aws_iam_role_policy_attachment" "main_restore" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+  role       = aws_iam_role.main.name
+}
+
+resource "aws_iam_role_policy_attachment" "s3_backup" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup"
+  role       = aws_iam_role.main.name
+}
+
+resource "aws_iam_role_policy_attachment" "s3_restore" {
+  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
+  role       = aws_iam_role.main.name
 }
 
 module "kms" {
-  source = "git::https://github.com/geekcell/terraform-aws-kms.git?ref=v1.0.0"
-  alias  = "alias/backup"
+  source = "github.com/geekcell/terraform-aws-kms?ref=v1"
+
+  alias = format("/%s/backup/vault/%s", var.service, var.vault_name)
 
   tags = var.tags
 }
