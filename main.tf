@@ -1,5 +1,5 @@
 /**
- * # Terraform AWS Backup Module
+ * # Terraform AWS Backup
  *
  * This Terraform module provides a preconfigured solution for setting up
  * AWS Backup in your AWS account. With this module, you can easily and
