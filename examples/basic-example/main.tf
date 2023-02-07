@@ -1,4 +1,4 @@
-module "example" {
+module "basic-example" {
   source = "../../"
 
   vault_name  = "main"
