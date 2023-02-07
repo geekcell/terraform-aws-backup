@@ -33,11 +33,21 @@
 [![Infrastructure Tests](https://www.bridgecrew.cloud/badges/github/geekcell/terraform-aws-backup/hipaa)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=geekcell%2Fterraform-aws-backup&benchmark=HIPAA)
 [![Infrastructure Tests](https://www.bridgecrew.cloud/badges/github/geekcell/terraform-aws-backup/fedramp_moderate)](https://www.bridgecrew.cloud/link/badge?vcs=github&fullRepo=geekcell%2Fterraform-aws-backup&benchmark=FEDRAMP+%28MODERATE%29)
 
-# Terraform AWS Backup Module
+# Terraform AWS Backup
 
-Terraform module which creates a Backup vault and plans attached to the vault.
-The focus on this module lies within it's simplicity by providing default values
-that should make sense for most use cases.
+This Terraform module provides a preconfigured solution for setting up
+AWS Backup in your AWS account. With this module, you can easily and
+efficiently create and manage backup policies for your AWS resources. Our
+team has extensive experience working with AWS Backup and has optimized
+this module to provide the best possible experience for users.
+
+Using this Terraform module, you can save time and effort in setting up
+and managing your backup policies, as well as avoid common mistakes and
+pitfalls. The module encapsulates all necessary configurations, making
+it easy to use and integrate into your existing AWS environment. Whether
+you are looking to add backup protection for your critical resources or
+streamline your existing backup processes, this Terraform module is a
+great choice.
 
 ## Inputs
 
@@ -65,15 +75,15 @@ No outputs.
 
 ## Resources
 
-- resource.aws_backup_plan.main (main.tf#45)
-- resource.aws_backup_selection.main (main.tf#38)
-- resource.aws_backup_vault.main (main.tf#8)
-- resource.aws_backup_vault_lock_configuration.main (main.tf#15)
-- resource.aws_iam_role.main (main.tf#86)
-- resource.aws_iam_role_policy_attachment.main_backup (main.tf#93)
-- resource.aws_iam_role_policy_attachment.main_restore (main.tf#98)
-- resource.aws_iam_role_policy_attachment.s3_backup (main.tf#103)
-- resource.aws_iam_role_policy_attachment.s3_restore (main.tf#108)
+- resource.aws_backup_plan.main (main.tf#55)
+- resource.aws_backup_selection.main (main.tf#48)
+- resource.aws_backup_vault.main (main.tf#18)
+- resource.aws_backup_vault_lock_configuration.main (main.tf#25)
+- resource.aws_iam_role.main (main.tf#96)
+- resource.aws_iam_role_policy_attachment.main_backup (main.tf#103)
+- resource.aws_iam_role_policy_attachment.main_restore (main.tf#108)
+- resource.aws_iam_role_policy_attachment.s3_backup (main.tf#113)
+- resource.aws_iam_role_policy_attachment.s3_restore (main.tf#118)
 - data source.aws_iam_policy_document.main (data.tf#1)
 
 # Examples
