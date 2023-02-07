@@ -47,7 +47,7 @@ that should make sense for most use cases.
 | <a name="input_changeable_for_days"></a> [changeable\_for\_days](#input\_changeable\_for\_days) | The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create a vault lock in compliance mode. | `number` | `null` | no |
 | <a name="input_max_retention_days"></a> [max\_retention\_days](#input\_max\_retention\_days) | The maximum retention period that the vault retains its recovery points. | `number` | `365` | no |
 | <a name="input_min_retention_days"></a> [min\_retention\_days](#input\_min\_retention\_days) | The minimum retention period that the vault retains its recovery points. | `number` | `7` | no |
-| <a name="input_resources"></a> [resources](#input\_resources) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan. | `list(string)` | `[]` | no |
+| <a name="input_resources"></a> [resources](#input\_resources) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan. | `list(string)` | n/a | yes |
 | <a name="input_rules"></a> [rules](#input\_rules) | Backup rules to add to the AWS Backup Vault. See examples for usage. | <pre>list(object({<br>    name                     = string<br>    schedule                 = string<br>    start_window             = number<br>    completion_window        = number<br>    enable_continuous_backup = bool<br>    lifecycle                = map(string)<br>  }))</pre> | <pre>[<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 365<br>    },<br>    "name": "weekly-snapshot",<br>    "schedule": "cron(0 3 ? * 2,3,4,5,6,7,1 *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 365<br>    },<br>    "name": "monthly-snapshot",<br>    "schedule": "cron(0 3 1 * ? *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 730<br>    },<br>    "name": "quarterly-snapshot",<br>    "schedule": "cron(0 3 1 1,4,7,10 ? *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": false,<br>    "lifecycle": {<br>      "cold_storage_after": 1,<br>      "delete_after": 3650<br>    },<br>    "name": "yearly-snapshot",<br>    "schedule": "cron(0 3 1 1 ? *)",<br>    "start_window": 60<br>  },<br>  {<br>    "completion_window": 240,<br>    "enable_continuous_backup": true,<br>    "lifecycle": {<br>      "cold_storage_after": null,<br>      "delete_after": 35<br>    },<br>    "name": "daily-snapshot",<br>    "schedule": "cron(0 3 ? * * *)",<br>    "start_window": 60<br>  }<br>]</pre> | no |
 | <a name="input_service"></a> [service](#input\_service) | The service that the resource belongs to. | `string` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to add to the AWS Backup. | `map(any)` | `{}` | no |
@@ -77,14 +77,41 @@ No outputs.
 - data source.aws_iam_policy_document.main (data.tf#1)
 
 # Examples
-### Full
+### Basic Example
 ```hcl
-module "example" {
+module "basic-example" {
   source = "../../"
 
   vault_name  = "main"
   backup_name = "rds"
   service     = "s3"
+  resources   = ["arn:aws:s3:::my-bucket"]
+}
+```
+### with-rules
+```hcl
+module "with-rules" {
+  source = "../../"
+
+  vault_name  = "main"
+  backup_name = "rds"
+  service     = "s3"
+  resources   = ["arn:aws:s3:::my-bucket"]
+
+  rules = [
+    {
+      name                     = "weekly-snapshot"
+      schedule                 = "cron(0 3 ? * 2,3,4,5,6,7,1 *)"
+      start_window             = 60
+      completion_window        = 240
+      enable_continuous_backup = false
+
+      lifecycle = {
+        cold_storage_after = 1
+        delete_after       = 180 # half a year
+      }
+    }
+  ]
 }
 ```
 <!-- END_TF_DOCS -->
