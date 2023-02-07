@@ -1,9 +1,19 @@
 /**
  * # Terraform AWS Backup Module
  *
- * Terraform module which creates a Backup vault and plans attached to the vault.
- * The focus on this module lies within it's simplicity by providing default values
- * that should make sense for most use cases.
+ * This Terraform module provides a preconfigured solution for setting up
+ * AWS Backup in your AWS account. With this module, you can easily and
+ * efficiently create and manage backup policies for your AWS resources. Our
+ * team has extensive experience working with AWS Backup and has optimized
+ * this module to provide the best possible experience for users.
+ *
+ * Using this Terraform module, you can save time and effort in setting up
+ * and managing your backup policies, as well as avoid common mistakes and
+ * pitfalls. The module encapsulates all necessary configurations, making
+ * it easy to use and integrate into your existing AWS environment. Whether
+ * you are looking to add backup protection for your critical resources or
+ * streamline your existing backup processes, this Terraform module is a
+ * great choice.
  */
 resource "aws_backup_vault" "main" {
   name        = var.vault_name
