@@ -111,9 +111,9 @@ resource "aws_iam_role_policy_attachment" "s3_restore" {
 }
 
 module "kms" {
-  source = "github.com/geekcell/terraform-aws-kms?ref=v1"
+  source = "github.com/geekcell/terraform-aws-kms?ref=v1.0"
 
-  alias = format("/%s/backup/vault/%s", var.service, var.vault_name)
+  alias = format("%s/backup/vault/%s", var.service, var.vault_name)
 
   tags = var.tags
 }
