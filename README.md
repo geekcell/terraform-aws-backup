@@ -1,5 +1,5 @@
 <!-- BEGIN_TF_DOCS -->
-[![Geek Cell GmbH](https://raw.githubusercontent.com/geekcell/template-terraform-module/main/docs/assets/logo.svg)](https://www.geekcell.io/)
+[![Geek Cell GmbH](https://raw.githubusercontent.com/geekcell/.github/main/geekcell-github-banner.png)](https://www.geekcell.io/)
 
 ### Code Quality
 [![License](https://img.shields.io/github/license/geekcell/terraform-aws-backup)](https://github.com/geekcell/terraform-aws-backup/blob/master/LICENSE)
@@ -71,7 +71,7 @@ No outputs.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.36 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.36, < 5.0 |
 
 ## Resources
 
@@ -98,7 +98,8 @@ module "basic-example" {
   resources   = ["arn:aws:s3:::my-bucket"]
 }
 ```
-### with-rules
+
+### With Rules
 ```hcl
 module "with-rules" {
   source = "../../"
