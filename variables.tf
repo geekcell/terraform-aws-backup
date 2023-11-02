@@ -5,14 +5,38 @@ variable "tags" {
   type        = map(any)
 }
 
-# AWS Backup
-variable "backup_name" {
-  description = "The display name of a backup plan."
+# Backup Vault
+variable "vault_name" {
+  description = "Name of the backup vault to create."
   type        = string
 }
 
+variable "vault_force_destroy" {
+  description = "Whether to allow the backup vault to be destroyed even if it contains recovery points."
+  default     = false
+  type        = string
+}
+
+# Vault Lock
+variable "enable_vault_lock" {
+  description = "Whether to enable Vault Lock for the backup vault."
+  default     = false
+  type        = bool
+}
+
 variable "changeable_for_days" {
-  description = " The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create a vault lock in compliance mode."
+  description = <<EOF
+  The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create
+  a vault lock in compliance mode. When you apply this setting:
+
+  The vault will become immutable in 3 days after applying. You have 3 days of grace time to manage or delete the vault
+  lock before it becomes immutable. During this time, only those users with specific IAM permissions can make changes.
+
+  Once the vault is locked in compliance mode, it cannot be managed or deleted by anyone, even the root user or AWS.
+  The only way to deactivate the lock is to terminate the account, which will delete all the backups.
+
+  Since you cannot delete the Vault, it will be charged for backups until that date. Be careful!
+EOF
   default     = null
   type        = number
 }
@@ -29,99 +53,89 @@ variable "max_retention_days" {
   type        = number
 }
 
-variable "resources" {
-  description = "An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan."
-  type        = list(string)
+# AWS Backup
+variable "plan_name" {
+  description = "The display name of the backup plan."
+  type        = string
 }
 
-variable "rules" {
+variable "predefined_rules" {
+  description = "A list of predefined backup rules to add to the AWS Backup Plan. See examples for usage."
+  default     = []
+  type        = list(string)
+
+  validation {
+    condition = alltrue([
+      for rule in var.predefined_rules :
+      true
+      if contains([
+        "daily-snapshot",
+        "weekly-snapshot",
+        "monthly-snapshot",
+        "quarterly-snapshot",
+        "yearly-snapshot",
+      ], rule)
+    ])
+    error_message = "Invalid predefined_rules. Valid rules are 'daily-snapshot', 'weekly-snapshot', 'monthly-snapshot', 'quarterly-snapshot', 'yearly-snapshot'."
+  }
+}
+
+variable "custom_rules" {
   description = "Backup rules to add to the AWS Backup Vault. See examples for usage."
-
-  default = [
-    # Weekly At 03:00 AM UTC, only on
-    # Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, and Sunday
-    {
-      name                     = "weekly-snapshot"
-      schedule                 = "cron(0 3 ? * 2,3,4,5,6,7,1 *)"
-      start_window             = 60
-      completion_window        = 240
-      enable_continuous_backup = false
-
-      lifecycle = {
-        cold_storage_after = 1
-        delete_after       = 365 # 1 year
-      }
-    },
-    # Monthly At 03:00 AM UTC, on day 1 of the month
-    {
-      name                     = "monthly-snapshot"
-      schedule                 = "cron(0 3 1 * ? *)"
-      start_window             = 60
-      completion_window        = 240
-      enable_continuous_backup = false
-
-      lifecycle = {
-        cold_storage_after = 1
-        delete_after       = 365 # 1 year
-      }
-    },
-    # At 03:00 AM UTC, on day 1 of the month, only in
-    # January, April, July, and October
-    {
-      name                     = "quarterly-snapshot"
-      schedule                 = "cron(0 3 1 1,4,7,10 ? *)"
-      start_window             = 60
-      completion_window        = 240
-      enable_continuous_backup = false
-
-      lifecycle = {
-        cold_storage_after = 1
-        delete_after       = 730 # 2 years
-      }
-    },
-    # At 03:00 AM UTC, on day 1 of the month, only in January
-    {
-      name                     = "yearly-snapshot"
-      schedule                 = "cron(0 3 1 1 ? *)"
-      start_window             = 60
-      completion_window        = 240
-      enable_continuous_backup = false
-
-      lifecycle = {
-        cold_storage_after = 1
-        delete_after       = 3650 # 10 years
-      }
-    },
-    # Daily
-    {
-      name                     = "daily-snapshot"
-      schedule                 = "cron(0 3 ? * * *)"
-      start_window             = 60
-      completion_window        = 240
-      enable_continuous_backup = true
-
-      lifecycle = {
-        cold_storage_after = null
-        delete_after       = 35
-      }
-    }
-  ]
+  default     = []
   type = list(object({
-    name                     = string
-    schedule                 = string
-    start_window             = number
-    completion_window        = number
-    enable_continuous_backup = bool
-    lifecycle                = map(string)
+    name     = string
+    schedule = optional(string)
+
+    start_window      = optional(number)
+    completion_window = optional(number)
+
+    enable_continuous_backup = optional(bool)
+    recovery_point_tags      = optional(map(string), {})
+
+    lifecycle = optional(object({
+      cold_storage_after = optional(number)
+      delete_after       = optional(number)
+    }))
+
+    copy_action = optional(object({
+      destination_vault_arn = optional(string)
+      lifecycle = optional(object({
+        cold_storage_after = optional(number)
+        delete_after       = optional(number)
+      }))
+    }))
   }))
 }
 
-variable "service" {
-  description = "The service that the resource belongs to."
+variable "enable_windows_vss_backup" {
+  description = "Whether to enable Windows VSS backup for the backup plan."
+  default     = false
+  type        = bool
+}
+
+# Backup Selection
+variable "resources" {
+  description = "An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan."
+  default     = []
+  type        = list(string)
+}
+
+variable "role_arn" {
+  description = "The ARN of the IAM role that AWS Backup uses to authenticate when restoring or backing up the target resources. If left empty, a default role will be created."
+  default     = null
   type        = string
 }
 
-variable "vault_name" {
-  description = "Name of the backup vault to create."
+# KMS Encryption
+variable "kms_key_id" {
+  description = "The ARN of the KMS Key to use to encrypt your backups. If left empty, the default AWS KMS will be used."
+  default     = null
   type        = string
+}
+
+variable "enable_customer_managed_kms" {
+  description = "Whether to enable customer managed KMS encryption for the backup vault."
+  default     = false
+  type        = bool
 }

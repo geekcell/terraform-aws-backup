@@ -3,7 +3,7 @@
  *
  * This Terraform module provides a preconfigured solution for setting up
  * AWS Backup in your AWS account. With this module, you can easily and
- * efficiently create and manage backup policies for your AWS resources. Our
+ * efficiently create and manage backups for your AWS resources. Our
  * team has extensive experience working with AWS Backup and has optimized
  * this module to provide the best possible experience for users.
  *
@@ -15,115 +15,127 @@
  * streamline your existing backup processes, this Terraform module is a
  * great choice.
  */
+locals {
+  # Merge predefined rules with the passed rules. If the names of a predefined rule and a passed rule match,
+  # the passed rule will take precedence and they will be merged.
+  merged_rules = merge(
+    { for rule in local.predefined_rules : rule.name => rule if contains(var.predefined_rules, rule.name) },
+    { for rule in var.custom_rules : rule.name => rule }
+  )
+}
+
 resource "aws_backup_vault" "main" {
-  name        = var.vault_name
-  kms_key_arn = module.kms.key_arn
+  name          = var.vault_name
+  force_destroy = var.vault_force_destroy
+  kms_key_arn   = var.enable_customer_managed_kms ? module.kms[0].key_arn : var.kms_key_id
 
   tags = var.tags
 }
 
 resource "aws_backup_vault_lock_configuration" "main" {
-  backup_vault_name = var.vault_name
+  count = var.enable_vault_lock ? 1 : 0
+
+  backup_vault_name   = var.vault_name
+  changeable_for_days = var.changeable_for_days
 
   min_retention_days = var.min_retention_days
   max_retention_days = var.max_retention_days
-
-  # When you apply these settings:
-  #
-  # The vault will become immutable in 3 days after applying.
-  # You have 3 days of grace time to manage or delete the vault
-  # lock before it becomes immutable. During this time, only
-  # those users with specific IAM permissions can make changes.
-  #
-  # Once the vault is locked in compliance mode, it cannot be
-  # managed or deleted by anyone, even the root user or AWS.
-  # The only way to deactivate the lock is to terminate the account,
-  # which will delete all the backups.
-  #
-  # Since you cannot delete the Vault, it will be charged
-  # for backups until that date. Be careful!
-  changeable_for_days = var.changeable_for_days
-}
-
-resource "aws_backup_selection" "main" {
-  iam_role_arn = aws_iam_role.main.arn
-  name         = "${var.vault_name}-backup"
-  plan_id      = aws_backup_plan.main.id
-  resources    = var.resources
 }
 
 resource "aws_backup_plan" "main" {
-  name = var.backup_name
+  name = var.plan_name
 
   dynamic "rule" {
-    for_each = var.rules
+    for_each = local.merged_rules
 
     content {
-      target_vault_name        = aws_backup_vault.main.name
+      target_vault_name = aws_backup_vault.main.name
+
       rule_name                = rule.value.name
       schedule                 = rule.value.schedule
       start_window             = rule.value.start_window
       completion_window        = rule.value.completion_window
       enable_continuous_backup = rule.value.enable_continuous_backup
+      recovery_point_tags      = merge(var.tags, rule.value.recovery_point_tags)
 
       dynamic "lifecycle" {
-        for_each = [true]
+        for_each = rule.value.lifecycle != null ? [rule.value.lifecycle] : []
 
         content {
-          delete_after       = rule.value.lifecycle.delete_after
-          cold_storage_after = rule.value.lifecycle.cold_storage_after
+          delete_after       = lifecycle.value.delete_after
+          cold_storage_after = lifecycle.value.cold_storage_after
         }
       }
 
-      copy_action {
-        destination_vault_arn = aws_backup_vault.main.arn
-      }
+      dynamic "copy_action" {
+        for_each = rule.value.copy_action != null ? [rule.value.copy_action] : []
 
-      recovery_point_tags = {
-        Name = rule.value.name
+        content {
+          destination_vault_arn = copy_action.value.destination_vault_arn
+
+          dynamic "lifecycle" {
+            for_each = copy_action.value.lifecycle != null ? [copy_action.value.lifecycle] : []
+
+            content {
+              delete_after       = lifecycle.value.delete_after
+              cold_storage_after = lifecycle.value.cold_storage_after
+            }
+          }
+        }
       }
     }
   }
 
-  tags = merge(
-    var.tags,
-    {
-      "ServiceType" = "backup"
+  dynamic "advanced_backup_setting" {
+    for_each = var.enable_windows_vss_backup ? [true] : []
+
+    content {
+      resource_type = "EC2"
+      backup_options = {
+        WindowsVSS = "enabled"
+      }
     }
-  )
+  }
+
+  tags = var.tags
 }
 
-resource "aws_iam_role" "main" {
-  name        = "${var.vault_name}-backup"
-  description = "This role is responsible for the backup in the Vault."
+resource "aws_backup_selection" "main" {
+  count = length(var.resources) > 0 ? 1 : 0
 
-  assume_role_policy = data.aws_iam_policy_document.main.json
+  name    = "${var.vault_name}-backup"
+  plan_id = aws_backup_plan.main.id
+
+  iam_role_arn = coalesce(var.role_arn, module.iam_role[0].arn)
+  resources    = var.resources
 }
 
-resource "aws_iam_role_policy_attachment" "main_backup" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
-  role       = aws_iam_role.main.name
-}
+module "iam_role" {
+  count = var.role_arn == null ? 1 : 0
 
-resource "aws_iam_role_policy_attachment" "main_restore" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
-  role       = aws_iam_role.main.name
-}
+  source  = "geekcell/iam-role/aws"
+  version = ">= 1.0.0, < 2.0.0"
 
-resource "aws_iam_role_policy_attachment" "s3_backup" {
-  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup"
-  role       = aws_iam_role.main.name
-}
+  name = "${var.vault_name}-backup"
 
-resource "aws_iam_role_policy_attachment" "s3_restore" {
-  policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
-  role       = aws_iam_role.main.name
+  description  = "This role is responsible for restoring/backing up the resources in the Vault."
+  assume_roles = { "Service" : { identifiers = ["backup.amazonaws.com"] } }
+  policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
+    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
+    "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Backup",
+    "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
+  ]
+
+  tags = var.tags
 }
 
 module "kms" {
+  count = var.enable_customer_managed_kms ? 1 : 0
+
   source  = "geekcell/kms/aws"
   version = ">= 1.0.0, < 2.0.0"
 
-  alias = format("%s/backup/vault/%s", var.service, var.vault_name)
+  alias = "/backup/vault/${var.vault_name}"
   tags  = var.tags
 }
