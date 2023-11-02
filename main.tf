@@ -101,13 +101,23 @@ resource "aws_backup_plan" "main" {
 }
 
 resource "aws_backup_selection" "main" {
-  count = length(var.resources) > 0 ? 1 : 0
+  for_each = { for sel in var.selections : sel.name => sel }
 
-  name    = "${var.vault_name}-backup"
+  name    = "${var.vault_name}-${each.key}"
   plan_id = aws_backup_plan.main.id
 
-  iam_role_arn = coalesce(var.role_arn, module.iam_role[0].arn)
-  resources    = var.resources
+  iam_role_arn = coalesce(each.value.role_arn, module.iam_role[0].arn)
+  resources    = each.value.arns
+
+  dynamic "selection_tag" {
+    for_each = each.value.tag != null ? [each.value.tag] : []
+
+    content {
+      key   = selection_tag.value.key
+      type  = selection_tag.value.type
+      value = selection_tag.value.value
+    }
+  }
 }
 
 module "iam_role" {

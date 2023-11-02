@@ -18,9 +18,15 @@ run "create_vault_with_custom_rules" {
       }
     ]
 
-    resources = [
-      "arn:aws:s3:::example-bucket-arn",
-      "arn:aws:elasticfilesystem:eu-central-1:*:file-system/fs-0123456789abcdef8"
+    selections = [
+      {
+        name = "s3-buckets"
+        arns = ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-other-bucket"]
+      },
+      {
+        name = "db-snaps"
+        arns = ["arn:aws:rds:eu-central-1:*:db:my-mysql-instance"]
+      }
     ]
 
     tags = {
@@ -50,8 +56,13 @@ run "create_vault_with_custom_rules" {
   }
 
   assert {
-    condition     = length(aws_backup_selection.main[0].resources) == 2
-    error_message = "Expected backup selection to contain 2 resources."
+    condition     = length(aws_backup_selection.main["s3-buckets"].resources) == 2
+    error_message = "Expected S3 backup selection to contain 2 resources."
+  }
+
+  assert {
+    condition     = length(aws_backup_selection.main["db-snaps"].resources) == 1
+    error_message = "Expected DB backup selection to contain 1 resources."
   }
 
   assert {
@@ -60,7 +71,7 @@ run "create_vault_with_custom_rules" {
   }
 
   assert {
-    condition     = aws_backup_selection.main[0].iam_role_arn == module.iam_role[0].arn
+    condition     = aws_backup_selection.main["s3-buckets"].iam_role_arn == module.iam_role[0].arn
     error_message = "Expected backup selection IAM role to be the default one."
   }
 }

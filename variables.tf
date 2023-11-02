@@ -115,10 +115,20 @@ variable "enable_windows_vss_backup" {
 }
 
 # Backup Selection
-variable "resources" {
+variable "selections" {
   description = "An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan."
   default     = []
-  type        = list(string)
+  type = list(object({
+    name     = string
+    role_arn = optional(string)
+
+    arns = optional(list(string))
+    tag = optional(object({
+      type  = string
+      key   = string
+      value = string
+    }))
+  }))
 }
 
 variable "role_arn" {
