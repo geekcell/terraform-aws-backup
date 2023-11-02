@@ -26,13 +26,18 @@ content: |-
   # Examples
     ### Basic Example
     ```hcl
-    {{ include "examples/basic-example/main.tf" }}
+    {{ include "examples/minimal/main.tf" }}
     ```
 
     ### With Rules
     ```hcl
-    {{ include "examples/with-rules/main.tf" }}
+    {{ include "examples/with-predefined-rules/main.tf" }}
     ```
+
+  # Predefined Rules
+  ```hcl
+  {{ include "rules.tf" }}
+  ```
 
 output:
   file: "README.md"
