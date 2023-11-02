@@ -4,7 +4,7 @@ run "create_vault_with_custom_rules" {
     plan_name  = "example-plan"
 
     predefined_rules = ["daily-snapshot", "yearly-snapshot"]
-    custom_rules     = [
+    custom_rules = [
       # Daily Snapshot but change the schedule to run at 12:00 UTC
       {
         name     = "daily-snapshot"
@@ -13,7 +13,7 @@ run "create_vault_with_custom_rules" {
 
       # Yearly Snapshot but delete after 3 years instead
       {
-        name      = "yearly-snapshot"
+        name = "yearly-snapshot"
         lifecycle = {
           delete_after = 1095
         }
@@ -37,12 +37,12 @@ run "create_vault_with_custom_rules" {
   }
 
   assert {
-    condition     = one([for rule in aws_backup_plan.main.rule : rule if rule.rule_name == "daily-snapshot" ]).schedule == "cron(0 12 ? * * *)"
+    condition     = one([for rule in aws_backup_plan.main.rule : rule if rule.rule_name == "daily-snapshot"]).schedule == "cron(0 12 ? * * *)"
     error_message = "Expected daily-snapshot rule to have new schedule."
   }
 
   assert {
-    condition     = one(one([for rule in aws_backup_plan.main.rule : rule if rule.rule_name == "yearly-snapshot" ]).lifecycle).delete_after == 1095
+    condition     = one(one([for rule in aws_backup_plan.main.rule : rule if rule.rule_name == "yearly-snapshot"]).lifecycle).delete_after == 1095
     error_message = "Expected yearly-snapshot rule to have new lifecycle."
   }
 }
