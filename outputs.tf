@@ -1,11 +1,11 @@
 output "backup_vault_id" {
   description = "The ID of the backup vault."
-  value       = aws_backup_vault.main.id
+  value       = var.create_backup_vault ? aws_backup_vault.main[0].id : data.aws_backup_vault.main[0].id
 }
 
 output "backup_vault_arn" {
   description = "The ARN of the backup vault."
-  value       = aws_backup_vault.main.arn
+  value       = var.create_backup_vault ? aws_backup_vault.main[0].arn : data.aws_backup_vault.main[0].arn
 }
 
 output "backup_plan_id" {

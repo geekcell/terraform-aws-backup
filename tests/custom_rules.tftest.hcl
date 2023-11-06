@@ -41,7 +41,7 @@ run "create_vault_with_custom_rules" {
   }
 
   assert {
-    condition     = length(aws_backup_vault.main.kms_key_arn) >= 1
+    condition     = length(aws_backup_vault.main[0].kms_key_arn) >= 1
     error_message = "Expected Backup Plan to be encrypted by default AWS KMS key."
   }
 

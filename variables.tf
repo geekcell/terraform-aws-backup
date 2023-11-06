@@ -6,8 +6,14 @@ variable "tags" {
 }
 
 # Backup Vault
+variable "create_backup_vault" {
+  description = "Whether to create a backup vault or use a pre-existing one."
+  default     = true
+  type        = bool
+}
+
 variable "vault_name" {
-  description = "Name of the backup vault to create."
+  description = "Name of the backup vault to create or use and existing one."
   type        = string
 }
 
