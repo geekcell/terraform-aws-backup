@@ -55,7 +55,8 @@ great choice.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_changeable_for_days"></a> [changeable\_for\_days](#input\_changeable\_for\_days) | The number of days before the lock date. If omitted creates a vault lock in governance mode, otherwise it will create<br>  a vault lock in compliance mode. When you apply this setting:<br><br>  The vault will become immutable in 3 days after applying. You have 3 days of grace time to manage or delete the vault<br>  lock before it becomes immutable. During this time, only those users with specific IAM permissions can make changes.<br><br>  Once the vault is locked in compliance mode, it cannot be managed or deleted by anyone, even the root user or AWS.<br>  The only way to deactivate the lock is to terminate the account, which will delete all the backups.<br><br>  Since you cannot delete the Vault, it will be charged for backups until that date. Be careful! | `number` | `null` | no |
-| <a name="input_custom_rules"></a> [custom\_rules](#input\_custom\_rules) | Backup rules to add to the AWS Backup Vault. See examples for usage. | <pre>list(object({<br>    name     = string<br>    schedule = optional(string)<br><br>    start_window      = optional(number)<br>    completion_window = optional(number)<br><br>    enable_continuous_backup = optional(bool)<br>    recovery_point_tags      = optional(map(string), {})<br><br>    lifecycle = optional(object({<br>      cold_storage_after = optional(number)<br>      delete_after       = optional(number)<br>    }))<br><br>    copy_action = optional(object({<br>      destination_vault_arn = optional(string)<br>      lifecycle             = optional(object({<br>        cold_storage_after = optional(number)<br>        delete_after       = optional(number)<br>      }))<br>    }))<br>  }))</pre> | `[]` | no |
+| <a name="input_create_backup_vault"></a> [create\_backup\_vault](#input\_create\_backup\_vault) | Whether to create a backup vault or use a pre-existing one. | `bool` | `true` | no |
+| <a name="input_custom_rules"></a> [custom\_rules](#input\_custom\_rules) | Backup rules to add to the AWS Backup Vault. See examples for usage. | <pre>list(object({<br>    name     = string<br>    schedule = optional(string)<br><br>    start_window      = optional(number)<br>    completion_window = optional(number)<br><br>    enable_continuous_backup = optional(bool)<br>    recovery_point_tags      = optional(map(string), {})<br><br>    lifecycle = optional(object({<br>      cold_storage_after = optional(number)<br>      delete_after       = optional(number)<br>    }))<br><br>    copy_action = optional(object({<br>      destination_vault_arn = optional(string)<br>      lifecycle = optional(object({<br>        cold_storage_after = optional(number)<br>        delete_after       = optional(number)<br>      }))<br>    }))<br>  }))</pre> | `[]` | no |
 | <a name="input_enable_customer_managed_kms"></a> [enable\_customer\_managed\_kms](#input\_enable\_customer\_managed\_kms) | Whether to enable customer managed KMS encryption for the backup vault. | `bool` | `false` | no |
 | <a name="input_enable_vault_lock"></a> [enable\_vault\_lock](#input\_enable\_vault\_lock) | Whether to enable Vault Lock for the backup vault. | `bool` | `false` | no |
 | <a name="input_enable_windows_vss_backup"></a> [enable\_windows\_vss\_backup](#input\_enable\_windows\_vss\_backup) | Whether to enable Windows VSS backup for the backup plan. | `bool` | `false` | no |
@@ -65,10 +66,10 @@ great choice.
 | <a name="input_plan_name"></a> [plan\_name](#input\_plan\_name) | The display name of the backup plan. | `string` | n/a | yes |
 | <a name="input_predefined_rules"></a> [predefined\_rules](#input\_predefined\_rules) | A list of predefined backup rules to add to the AWS Backup Plan. See examples for usage. | `list(string)` | `[]` | no |
 | <a name="input_role_arn"></a> [role\_arn](#input\_role\_arn) | The ARN of the IAM role that AWS Backup uses to authenticate when restoring or backing up the target resources. If left empty, a default role will be created. | `string` | `null` | no |
-| <a name="input_selections"></a> [selections](#input\_selections) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan. | <pre>list(object({<br>    name     = string<br>    role_arn = optional(string)<br><br>    arns = optional(list(string))<br>    tag  = optional(object({<br>      type  = string<br>      key   = string<br>      value = string<br>    }))<br>  }))</pre> | `[]` | no |
+| <a name="input_selections"></a> [selections](#input\_selections) | An array of strings that either contain Amazon Resource Names (ARNs) or match patterns of resources to assign to a backup plan. | <pre>list(object({<br>    name     = string<br>    role_arn = optional(string)<br><br>    arns = optional(list(string))<br>    tag = optional(object({<br>      type  = string<br>      key   = string<br>      value = string<br>    }))<br>  }))</pre> | `[]` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to add to the AWS Backup. | `map(any)` | `{}` | no |
 | <a name="input_vault_force_destroy"></a> [vault\_force\_destroy](#input\_vault\_force\_destroy) | Whether to allow the backup vault to be destroyed even if it contains recovery points. | `string` | `false` | no |
-| <a name="input_vault_name"></a> [vault\_name](#input\_vault\_name) | Name of the backup vault to create. | `string` | n/a | yes |
+| <a name="input_vault_name"></a> [vault\_name](#input\_vault\_name) | Name of the backup vault to create or use and existing one. | `string` | n/a | yes |
 
 ## Outputs
 
@@ -87,10 +88,11 @@ great choice.
 
 ## Resources
 
-- resource.aws_backup_plan.main (main.tf#45)
-- resource.aws_backup_selection.main (main.tf#103)
-- resource.aws_backup_vault.main (main.tf#27)
-- resource.aws_backup_vault_lock_configuration.main (main.tf#35)
+- resource.aws_backup_plan.main (main.tf#53)
+- resource.aws_backup_selection.main (main.tf#111)
+- resource.aws_backup_vault.main (main.tf#33)
+- resource.aws_backup_vault_lock_configuration.main (main.tf#43)
+- data source.aws_backup_vault.main (main.tf#27)
 
 # Examples
 ### Basic Example

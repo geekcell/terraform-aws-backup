@@ -24,7 +24,15 @@ locals {
   )
 }
 
+data "aws_backup_vault" "main" {
+  count = var.create_backup_vault ? 0 : 1
+
+  name = var.vault_name
+}
+
 resource "aws_backup_vault" "main" {
+  count = var.create_backup_vault ? 1 : 0
+
   name          = var.vault_name
   force_destroy = var.vault_force_destroy
   kms_key_arn   = var.enable_customer_managed_kms ? module.kms[0].key_arn : var.kms_key_id
@@ -49,7 +57,7 @@ resource "aws_backup_plan" "main" {
     for_each = local.merged_rules
 
     content {
-      target_vault_name = aws_backup_vault.main.name
+      target_vault_name = var.vault_name
 
       rule_name                = rule.value.name
       schedule                 = rule.value.schedule
