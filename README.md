@@ -89,7 +89,7 @@ great choice.
 ## Resources
 
 - resource.aws_backup_plan.main (main.tf#53)
-- resource.aws_backup_selection.main (main.tf#111)
+- resource.aws_backup_selection.main (main.tf#113)
 - resource.aws_backup_vault.main (main.tf#33)
 - resource.aws_backup_vault_lock_configuration.main (main.tf#43)
 - data source.aws_backup_vault.main (main.tf#27)
